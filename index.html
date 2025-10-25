@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Polare — Children’s Stories</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&family=Space+Mono&display=swap" rel="stylesheet" />
+
+<style>
+  :root { --bg:#fff; --fg:#000; }
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);
+    font-family:'Cormorant Garamond',serif;overflow-x:hidden;}
+  h1,h2{font-family:'Space Mono',monospace;letter-spacing:-0.02em;}
+  header{text-align:center;padding:4rem 2rem 2rem;z-index:5;position:relative;}
+  header h1{font-size:4rem;margin:0;}
+  nav{margin-top:1rem;}
+  nav a{color:var(--fg);text-decoration:none;margin:0 1rem;font-family:'Space Mono',monospace;}
+  nav a:hover{text-decoration:underline;}
+  section{max-width:900px;margin:5rem auto;padding:2rem;border:1px solid #000;
+    background:rgba(255,255,255,0.7);backdrop-filter:blur(4px);
+    border-radius:6px;position:relative;z-index:5;transition:.4s;}
+  section:hover{transform:translateY(-5px);box-shadow:0 0 20px rgba(0,0,0,.1);}
+  h2{border-bottom:2px solid var(--fg);padding-bottom:.4rem;}
+  p{line-height:1.6;}
+  [contenteditable="true"]:focus{outline:2px dashed #000;outline-offset:4px;}
+  .bg-abstract{position:fixed;inset:0;z-index:0;overflow:hidden;}
+  .shape{position:absolute;background:var(--fg);opacity:.07;border-radius:50%;
+    animation:float 30s infinite ease-in-out;}
+  .shape:nth-child(1){width:300px;height:300px;top:10%;left:15%;animation-duration:40s;}
+  .shape:nth-child(2){width:200px;height:200px;top:60%;left:70%;animation-duration:25s;}
+  .shape:nth-child(3){width:400px;height:400px;top:30%;left:50%;
+    border-radius:0;transform:rotate(45deg);opacity:.04;animation-duration:60s;}
+  @keyframes float{
+    0%{transform:translateY(0) rotate(0deg);}
+    50%{transform:translateY(-50px) rotate(180deg);}
+    100%{transform:translateY(0) rotate(360deg);}
+  }
+  .upload-btn{display:inline-block;margin-top:10px;background:#000;color:#fff;
+    border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:.9rem;}
+  .upload-btn:hover{opacity:.8;}
+  .photo-container img{width:100%;margin-top:10px;border-radius:4px;
+    filter:grayscale(1) contrast(1.2);}
+  #saveBtn{display:block;margin:3rem auto;padding:10px 20px;background:#000;
+    border:none;border-radius:6px;color:#fff;font-size:1.1rem;
+    cursor:pointer;font-family:'Space Mono',monospace;}
+  #saveBtn:hover{opacity:.8;}
+</style>
+</head>
+
+<body>
+<div class="bg-abstract">
+  <div class="shape"></div><div class="shape"></div><div class="shape"></div>
+</div>
+
+<header>
+  <h1 contenteditable="true">POLARE</h1>
+  <p contenteditable="true" style="font-family:'Space Mono',monospace;font-size:1rem;">
+    Children’s Stories Told in Abstract Form
+  </p>
+  <nav>
+    <a href="#home">Home</a><a href="#essays">Essays</a><a href="#poems">Poems</a>
+    <a href="#books">Books</a><a href="#about">About</a>
+  </nav>
+</header>
+
+<section id="home" contenteditable="true">
+  <h2>Welcome</h2>
+  <p>Welcome to the abstract world of Polare — where children’s stories float through imagination...</p>
+</section>
+
+<section id="essays" contenteditable="true">
+  <h2>Essays</h2>
+  <p>“Patience and persistence are the marks of growth.” This essay reflects on lessons learned...</p>
+  <div class="photo-container"></div>
+  <input type="file" accept="image/*" class="upload-btn" onchange="addPhoto(event,this)">
+</section>
+
+<section id="poems" contenteditable="true">
+  <h2>Poems</h2>
+  <p>Under the soft glow of morning light,<br>The words begin to bloom...</p>
+  <div class="photo-container"></div>
+  <input type="file" accept="image/*" class="upload-btn" onchange="addPhoto(event,this)">
+</section>
+
+<section id="books" contenteditable="true">
+  <h2>Children’s Books</h2>
+  <p><strong>The Curious Cat and the Moon:</strong> A bedtime story about curiosity and courage.</p>
+  <div class="photo-container"></div>
+  <input type="file" accept="image/*" class="upload-btn" onchange="addPhoto(event,this)">
+</section>
+
+<section id="about" contenteditable="true">
+  <h2>About the Author</h2>
+  <p>I write to explore the invisible — feelings between words, light between shadows...</p>
+  <div class="photo-container"></div>
+  <input type="file" accept="image/*" class="upload-btn" onchange="addPhoto(event,this)">
+</section>
+
+<button id="saveBtn">💾 Save Changes</button>
+
+<script>
+/* ---- Add image ---- */
+function addPhoto(event,input){
+  const file=event.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=document.createElement('img');
+    img.src=e.target.result;
+    img.alt='Uploaded image';
+    input.previousElementSibling.appendChild(img);
+    autoSave(); // save immediately
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ---- Local Save / Load ---- */
+function autoSave(){
+  const data={
+    html: document.body.innerHTML
+  };
+  localStorage.setItem('polare-site',JSON.stringify(data));
+}
+
+function restore(){
+  const saved=localStorage.getItem('polare-site');
+  if(!saved) return;
+  try{
+    const data=JSON.parse(saved);
+    if(data.html){
+      document.body.innerHTML=data.html;
+      rebind(); // reattach JS after restoring DOM
+    }
+  }catch(e){console.error(e);}
+}
+
+/* ---- Rebind event listeners after restore ---- */
+function rebind(){
+  document.querySelectorAll('.upload-btn').forEach(btn=>{
+    btn.onchange=(e)=>addPhoto(e,btn);
+  });
+  document.getElementById('saveBtn').onclick=manualDownload;
+}
+
+/* ---- Manual download if they still want file ---- */
+function manualDownload(){
+  const content=document.documentElement.outerHTML;
+  const blob=new Blob([content],{type:'text/html'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='PolareWebsite.html';
+  a.click();
+}
+
+/* ---- Save button ---- */
+document.getElementById('saveBtn').addEventListener('click',()=>{
+  autoSave();
+  alert('✅ Your changes have been saved in this browser.');
+});
+
+/* ---- Save on edit automatically ---- */
+document.addEventListener('input',()=>{
+  clearTimeout(window.saveTimeout);
+  window.saveTimeout=setTimeout(autoSave,1000);
+});
+
+/* ---- Restore on load ---- */
+window.addEventListener('load',restore);
+</script>
+</body>
+</html>
