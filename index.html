@@ -45,9 +45,6 @@
     border:none;border-radius:6px;color:#fff;font-size:1.1rem;
     cursor:pointer;font-family:'Space Mono',monospace;}
   #saveBtn:hover{opacity:.8;}
-  #resetBtn{display:block;margin:0 auto 3rem;padding:8px 16px;background:#444;
-    color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:'Space Mono',monospace;}
-  #resetBtn:hover{opacity:.8;}
 </style>
 </head>
 
@@ -67,7 +64,6 @@
   </nav>
 </header>
 
-<main id="editable-content">
 <section id="home" contenteditable="true">
   <h2>Welcome</h2>
   <p>Welcome to the abstract world of Polare — where children’s stories float through imagination...</p>
@@ -100,10 +96,8 @@
   <div class="photo-container"></div>
   <input type="file" accept="image/*" class="upload-btn" onchange="addPhoto(event,this)">
 </section>
-</main>
 
 <button id="saveBtn">💾 Save Changes</button>
-<button id="resetBtn">↩ Reset to Original</button>
 
 <script>
 /* ---- Add image ---- */
@@ -116,35 +110,40 @@ function addPhoto(event,input){
     img.src=e.target.result;
     img.alt='Uploaded image';
     input.previousElementSibling.appendChild(img);
-    autoSave();
+    autoSave(); // save immediately
   };
   reader.readAsDataURL(file);
 }
 
 /* ---- Local Save / Load ---- */
 function autoSave(){
-  const content=document.getElementById('editable-content').innerHTML;
-  localStorage.setItem('polare-site',content);
+  const data={
+    html: document.body.innerHTML
+  };
+  localStorage.setItem('polare-site',JSON.stringify(data));
 }
 
-/* ---- Restore from localStorage ---- */
 function restore(){
   const saved=localStorage.getItem('polare-site');
-  if(saved){
-    document.getElementById('editable-content').innerHTML=saved;
-    rebind();
-  }
+  if(!saved) return;
+  try{
+    const data=JSON.parse(saved);
+    if(data.html){
+      document.body.innerHTML=data.html;
+      rebind(); // reattach JS after restoring DOM
+    }
+  }catch(e){console.error(e);}
 }
 
-/* ---- Reset button ---- */
-function resetAll(){
-  if(confirm("Reset to original content? This will delete local edits.")){
-    localStorage.removeItem('polare-site');
-    location.reload();
-  }
+/* ---- Rebind event listeners after restore ---- */
+function rebind(){
+  document.querySelectorAll('.upload-btn').forEach(btn=>{
+    btn.onchange=(e)=>addPhoto(e,btn);
+  });
+  document.getElementById('saveBtn').onclick=manualDownload;
 }
 
-/* ---- Manual file download ---- */
+/* ---- Manual download if they still want file ---- */
 function manualDownload(){
   const content=document.documentElement.outerHTML;
   const blob=new Blob([content],{type:'text/html'});
@@ -154,21 +153,20 @@ function manualDownload(){
   a.click();
 }
 
-/* ---- Rebind all event listeners ---- */
-function rebind(){
-  document.querySelectorAll('.upload-btn').forEach(btn=>{
-    btn.onchange=(e)=>addPhoto(e,btn);
-  });
-  document.getElementById('saveBtn').onclick=()=>{autoSave();alert('✅ Changes saved in browser.');};
-  document.getElementById('resetBtn').onclick=resetAll;
-}
-
-/* ---- Init ---- */
-window.addEventListener('load',()=>{
-  restore();
-  rebind();
-  document.addEventListener('input',()=>{clearTimeout(window._t);window._t=setTimeout(autoSave,800);});
+/* ---- Save button ---- */
+document.getElementById('saveBtn').addEventListener('click',()=>{
+  autoSave();
+  alert('✅ Your changes have been saved in this browser.');
 });
+
+/* ---- Save on edit automatically ---- */
+document.addEventListener('input',()=>{
+  clearTimeout(window.saveTimeout);
+  window.saveTimeout=setTimeout(autoSave,1000);
+});
+
+/* ---- Restore on load ---- */
+window.addEventListener('load',restore);
 </script>
 </body>
 </html>
